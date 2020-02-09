@@ -15,6 +15,12 @@
     "react-scripts": "^3.3.1",
     "typescript": "^3.7.5"
   },
+  "lint-staged": {
+    "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
   "scripts": {
     "prestart": "npm run build",
     "start": "react-scripts start",
@@ -36,5 +42,15 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "husky": "^4.2.1",
+    "lint-staged": "^10.0.7",
+    "prettier": "^1.19.1"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   }
 }
