@@ -1,9 +1,14 @@
 import * as React from "react";
-import { IFormContext, FormContext } from "./Form";
+import { IFormContext, FormContext, IValues, IErrors } from "./Form";
 
 /*the available editors for the field */
 type Editor = "textbox" | "multilinetextbox" | "dropdown";
 
+export interface IValidation {
+  /*TODO: Check if you can add multiple rules or not*/
+  rule: (values: IValues, fieldName: string, args: any) => string;
+  args?: any;
+}
 export interface IFieldProps {
   /* The Unique field name */
   id: string;
@@ -15,19 +20,37 @@ export interface IFieldProps {
   editor?: Editor;
 
   /* The drop down items for the field */
-  option?: string[];
+  options?: string[];
 
   /* The field value */
   value?: any;
+
+  /* The field validator function and argument */
+  validation?: IValidation;
 }
 
 export const Field: React.FC<IFieldProps> = ({
   id,
   label,
   editor,
-  option,
+  options,
   value
 }) => {
+  /**
+   * Gets the validation error for the field
+   * @param {IErrors} errors - All the errors from the form
+   * @returns {string[]} - The validation error
+   */
+  const getError = (errors: IErrors): string => (errors ? errors[id] : "");
+
+  /**
+   * Gets the inline styles for editor
+   * @param {IErrors} errors - All the errors from the form
+   * @returns {any} - The style object
+   */
+  const getEditorStyle = (errors: IErrors): any =>
+    getError(errors) ? { borderColor: "red" } : {};
+
   return (
     <FormContext.Consumer>
       {(context: IFormContext) => (
@@ -38,14 +61,12 @@ export const Field: React.FC<IFieldProps> = ({
               id={id}
               type="text"
               value={value}
+              style={getEditorStyle(context.errors)}
               onChange={(e: React.FormEvent<HTMLInputElement>) =>
                 /*push to change to form values */
                 context.setValues({ [id]: e.currentTarget.value })
               }
-              onBlur={
-                (e: React.FormEvent<HTMLInputElement>) =>
-                  console.log(e) /* TODO: validate field value */
-              }
+              onBlur={() => context.validate(id)}
               className="form-control"
             />
           )}
@@ -54,14 +75,12 @@ export const Field: React.FC<IFieldProps> = ({
             <textarea
               id={id}
               value={value}
+              style={getEditorStyle(context.errors)}
               onChange={(e: React.FormEvent<HTMLTextAreaElement>) =>
                 /*push change to form values */
                 context.setValues({ [id]: e.currentTarget.value })
               }
-              onBlur={
-                (e: React.FormEvent<HTMLTextAreaElement>) =>
-                  console.log(e) /* TODO: validate field value */
-              }
+              onBlur={() => context.validate(id)}
               className="form-control"
             />
           )}
@@ -71,26 +90,28 @@ export const Field: React.FC<IFieldProps> = ({
               id={id}
               name={id}
               value={value}
+              style={getEditorStyle(context.errors)}
               onChange={(e: React.FormEvent<HTMLSelectElement>) =>
                 /* push change to form value */
                 context.setValues({ [id]: e.currentTarget.value })
               }
-              onBlur={
-                (e: React.FormEvent<HTMLSelectElement>) =>
-                  console.log(e) /* TODO: validate field value */
-              }
+              onBlur={() => context.validate(id)}
               className="form-control"
             >
-              {option &&
-                option.map(option => (
+              {options &&
+                options.map(option => (
                   <option key={option} value={option}>
                     {option}
                   </option>
                 ))}
             </select>
           )}
-
-          {/* TODO - display validation error */}
+          {/*Displaying error message */}
+          {getError(context.errors) && (
+            <div style={{ color: "red", fontSize: "80%" }}>
+              <p>{getError(context.errors)}</p>
+            </div>
+          )}
         </div>
       )}
     </FormContext.Consumer>
